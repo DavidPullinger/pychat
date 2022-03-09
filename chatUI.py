@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+from tkinter import _setit
 import json
 import tkinter
 import client
@@ -15,10 +16,12 @@ global mainusername  # username of current user
 # ----------------------------------
 # MAIN SCREEN######################################
 def funclogin():
+    
     action, body = client.reqLOGIN(uname.get(), psword.get())
     mainusername = uname.get()
     client.send(action, body)  # sends message to server
     body = client.receive()
+    
     if body == "False":
         messagebox.showerror("showerror", "Incorrect login details")
     else:
@@ -38,9 +41,11 @@ def funclogin():
 
 
 def funccreateacc():
+    
     action, body = client.reqCREATE_ACC(uname.get(), psword.get())
     mainusername = uname.get()
     client.send(action, body)  # send message to server
+    
     if client.receive():
         chatscreen()
         messagebox.showinfo("showinfo", "Account created!")
@@ -78,59 +83,80 @@ btncreateacc = Button(root, text="Create Account", command=funccreateacc).grid(
 # CHAT choose SCREEN######################################
 # send UPDATE_MSGS regularly
 def updatechatoptions():
-    drpchats["menu"].delete(0, "end")
+    drpchats['menu'].delete(0,'end')
+    
     for i in chats:
-        drpchats["menu"].add_command(
-            chatscr, chat, *chats, command=lambda chat: openchat(chat)
-        )
-
+        drpchats['menu'].add_command(
+            label = i, command =_setit(chat,i)
+        )    
 
 def chatscreen():
     global chatscr
+    global currentChatName
+    global drpchats
+    
+    updatechatoptions()
+    
     chatscr = Toplevel()
     btncreategrp = Button(
         chatscr, text="Create New group", command=newchatscreen
     ).pack()
-    global chat
+    
     chat = StringVar()
-    global drpchats
+    
     drpchats = OptionMenu(
-        chatscr, chat, *chats, command=lambda chat: openchat(chat)
+        chatscr, currentChatName, *chats,
+        command=lambda value = currentChatName: openchat(value)
     ).pack()
 
 
 # NEW CHAT SCREEN##################################################
 def funccreatechat():
+    
     stripped = [s.strip() for s in participants.get().split(",")]
     action, body = client.reqCREATE_GROUP(grpname.get(), stripped)
     client.send(action, body)  # send message to server
     bod = client.receive()
+    
     if bod == "False":
         messagebox.showerror("showerror", "PARTICIPANTS NOT VALID")
     else:
         # add group to list bod containts group ID
         chats.append(grpname.get())
-
+        chatIDs.append(bod)
+        updatechatoptions()
         messagebox.showinfo("showinfo", "Chat Created!")
-
-
+        
+        
 def newchatscreen():
-    newchatscr = Toplevel()
     global grpname
     global participants
+    
     grpname = StringVar()
     participants = StringVar()
+    
+    newchatscr = Toplevel()
+    newchatscr.title("CREAT NEW CHAT")
+    newchatscr.geometry("800x600")
+    
     lblname = Label(newchatscr, text="Enter name of group").grid(row=0, column=0)
     etryname = Entry(newchatscr, textvariable=grpname).grid(row=0, column=1)
+    
     lblparticipants = Label(
         newchatscr, text="Enter a list of usernames\nSeparated by a ,"
     ).grid(row=1, column=0)
-    etryparticipants = Entry(newchatscr, textvariable=participants).grid(
-        row=1, column=1
-    )
-    btncreatechat = Button(newchatscr, text="Create Chat", command=funccreatechat).grid(
-        row=2, column=0
-    )
+    
+    etryparticipants = Entry(
+        newchatscr, textvariable=participants
+    ).grid(
+            row=1, column=1
+        )
+    
+    btncreatechat = Button(
+        newchatscr, text="Create Chat", command=funccreatechat
+    ).grid(
+            row=2, column=0
+        )
 
 
 # CHAT SCREEN#############################################
@@ -139,10 +165,28 @@ def sendmsg(msg):
 
 
 def openchat(chatname):
+    
+    global currentChatId
+    
+    #loop to find current chat ID from chatID list
+    for i in range(len(chats)):
+        if(chatname == chats[i]):
+            currentChatId = chatIDs[i]
+            
+    #initialize chat screen----------
     openchatscr = Toplevel()
     openchatscr.geometry("800x600")
     openchatscr.title("opened chat")
-    print(chatname)
+    #--------------------------------
+    
+    #send request for update of all messages
+    #send current date and time
+    action, body = client.reqUPDATE_MSGS(currentChatId, )
+    client.send(action,body)    #sending message to server
+    #---------------------------------------
+    
+    
+        
     mainframe = LabelFrame(openchatscr)
     mainframe.grid(row=0, column=0, columnspan=3)
     chatbox = Text(mainframe, width=50, height=30)

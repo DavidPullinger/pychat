@@ -52,7 +52,7 @@ def reqUPDATE_MSGS(uname,lastudate):
     return "UPDATE_MSGS", json.dumps(update_msgs)
 
 def resUPDATE_MSGS(body):
-    return 0
+    return body
 #-----------------------------------------
 def reqCREATE_GROUP(name, participants):
     create_group = {
