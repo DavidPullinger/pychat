@@ -7,8 +7,8 @@ import client
 root = Tk()
 root.title("ChatApp")
 root.geometry("800x600")
-global chats  # list of chats
-# MAIN SCREEN######################################
+chats = []    #list of chats
+#MAIN SCREEN######################################
 def funclogin():
     action, body = client.reqLOGIN(uname.get(), psword.get())
     client.send(action, body)  # sends message to server
@@ -54,16 +54,25 @@ btncreateacc = Button(root, text="Create Account", command=funccreateacc).grid(
 )
 
 
-# CHAT choose SCREEN######################################
-# send UPDATE_MSGS regularly
+#CHAT choose SCREEN######################################
+#send UPDATE_MSGS regularly
+def updatechatoptions():
+    drpchats['menu'].delete(0,'end')
+    for i in chats:
+        drpchats['menu'].add_command(chatscr,chat, *chats,command=lambda chat: openchat(chat))
+    pass
+
 def chatscreen():
+    global chatscr
     chatscr = Toplevel()
     chatscr.geometry("800x600")
     chatscr.title("CHATSCREEN")
     btncreategrp = Button(
         chatscr, text="Create New group", command=newchatscreen
     ).pack()
+    global chat
     chat = StringVar()
+    global drpchats
     drpchats = OptionMenu(
         chatscr, chat, *chats, command=lambda chat: openchat(chat)
     ).pack()
@@ -77,10 +86,14 @@ def funccreatechat():
     bod = client.receive()
     if bod == "False":
         messagebox.showerror("showerror", "PARTICIPANTS NOT VALID")
-
     else:
-        # add group to list bod containts group ID
-        messagebox.showinfo("showinfo", "Group Created!")
+        #add group to list bod containts group ID
+        chats.append(grpname.get())
+        
+        messagebox.showinfo("showinfo", "Chat Created!")
+        
+        
+        
 
 
 def newchatscreen():
