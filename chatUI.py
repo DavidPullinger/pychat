@@ -208,6 +208,7 @@ def openchat(chatname):
     openchatscr = Toplevel()
     openchatscr.resizable(False, False)
     openchatscr.geometry(DIMS)
+<<<<<<< Updated upstream
     # --------------------------------
 
     # send request for update of all messages
@@ -256,13 +257,30 @@ def openchat(chatname):
     for i in msglist:
         chatbox.insert("end", i["sender"] + " : " + i["content"] + "\n")
         chatbox.pack(expand=1, fill=BOTH)
+=======
+    openchatscr.resizable(False, False)
+    print(chatname)
+    mainframe = LabelFrame(openchatscr)
+    mainframe.grid(row=0, column=0, columnspan=2)
+    chatbox = Text(mainframe, width=51, height=40)
+    chatbox.insert("1.0", "First message in chat")
+    # chatbox.grid(row = 0, colum = 0, columnspan=3)
+    chatbox.pack(expand=1, fill=BOTH)
+    etrymsg = Entry(openchatscr, width=30).grid(row=1, column=0, pady=(10, 0))
+    btnsend = Button(openchatscr, text="SEND", command=lambda msg: sendmsg(msg)).grid(
+        row=1, column=1, pady=(10, 0)
+    )
+>>>>>>> Stashed changes
 
     # --------------------------------------------------
 
+<<<<<<< Updated upstream
     etrymsg = Entry(openchatscr, width=30).grid(row=1, column=0, pady=(10, 0))
     btnsend = Button(openchatscr, text="SEND", command=lambda msg: sendmsg(msg)).grid(
         row=1, column=1, pady=(10, 0)
     )
 
 
+=======
+>>>>>>> Stashed changes
 root.mainloop()
