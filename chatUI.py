@@ -8,12 +8,15 @@ import client
 root = Tk()
 root.title("pyChat")
 root.resizable(width=False, height=False)
-
-
-global chats  # list of chats
+# locally stored main info----------
+chats = []  # list of chats
+chatIDs = []  # list of chat Ids
+global mainusername  # username of current user
+# ----------------------------------
 # MAIN SCREEN######################################
 def funclogin():
     action, body = client.reqLOGIN(uname.get(), psword.get())
+    mainusername = uname.get()
     client.send(action, body)  # sends message to server
     body = client.receive()
     if body == "False":
@@ -23,10 +26,11 @@ def funclogin():
         body = json.loads(body)
         for i in body:
             # add chats to global chats list
-            for j in chats:
-                if i.groupName == j:
+            for j in chatIDs:
+                if i.groupId == j:
                     flag = False
             if flag:
+                chatIDs.append(i.groupId)
                 chats.append(i.groupName)
 
         chatscreen()
@@ -35,6 +39,7 @@ def funclogin():
 
 def funccreateacc():
     action, body = client.reqCREATE_ACC(uname.get(), psword.get())
+    mainusername = uname.get()
     client.send(action, body)  # send message to server
     if client.receive():
         chatscreen()
@@ -72,12 +77,23 @@ btncreateacc = Button(root, text="Create Account", command=funccreateacc).grid(
 
 # CHAT choose SCREEN######################################
 # send UPDATE_MSGS regularly
+def updatechatoptions():
+    drpchats["menu"].delete(0, "end")
+    for i in chats:
+        drpchats["menu"].add_command(
+            chatscr, chat, *chats, command=lambda chat: openchat(chat)
+        )
+
+
 def chatscreen():
+    global chatscr
     chatscr = Toplevel()
     btncreategrp = Button(
         chatscr, text="Create New group", command=newchatscreen
     ).pack()
+    global chat
     chat = StringVar()
+    global drpchats
     drpchats = OptionMenu(
         chatscr, chat, *chats, command=lambda chat: openchat(chat)
     ).pack()
@@ -91,10 +107,11 @@ def funccreatechat():
     bod = client.receive()
     if bod == "False":
         messagebox.showerror("showerror", "PARTICIPANTS NOT VALID")
-
     else:
         # add group to list bod containts group ID
-        messagebox.showinfo("showinfo", "Group Created!")
+        chats.append(grpname.get())
+
+        messagebox.showinfo("showinfo", "Chat Created!")
 
 
 def newchatscreen():
