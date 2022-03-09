@@ -1,3 +1,4 @@
+#CLIENT
 #definitions for functions regarding protocol
 #functions to be called by the ui
 
