@@ -1,12 +1,15 @@
 from tkinter import *
 from tkinter import messagebox
 import json
+import tkinter
 import client
 
 
 root = Tk()
-root.title("ChatApp")
-root.geometry("800x600")
+root.title("pyChat")
+root.resizable(width=False, height=False)
+
+
 global chats  # list of chats
 # MAIN SCREEN######################################
 def funclogin():
@@ -27,6 +30,7 @@ def funclogin():
                 chats.append(i.groupName)
 
         chatscreen()
+        root.destroy()
 
 
 def funccreateacc():
@@ -40,17 +44,29 @@ def funccreateacc():
     return 0
 
 
-title = Label(root, text="ChatApp", font=("Calibri", 30)).grid(row=0, column=1)
-lbluname = Label(root, text="username:").grid(row=1, column=0)
-lblpsword = Label(root, text="password:").grid(row=2, column=0)
+title2 = Label(root, text="Chat", font=("Calibri", 30), fg="#306998").grid(
+    row=0, column=0, columnspan=2, padx=(50, 0), pady=(10, 0)
+)
+title1 = Label(root, text="py", font=("Calibri", 30), fg="#FFE873").grid(
+    row=0, column=0, columnspan=2, padx=(0, 50), pady=(10, 0)
+)
+subtitle = Label(root, text="Chatting made easy as pie", font=("Calibri", 20)).grid(
+    row=1, column=0, columnspan=2, padx=(50, 50), pady=(10, 200)
+)
+lbluname = Label(root, text="Username:").grid(row=2, column=0, padx=(50, 0))
+lblpsword = Label(root, text="Password:").grid(row=3, column=0, padx=(50, 0))
 uname = StringVar()
 psword = StringVar()
-etryuname = Entry(root, textvariable=uname).grid(row=1, column=1)
-etrypsword = Entry(root, textvariable=psword).grid(row=2, column=1)
+etryuname = Entry(root, textvariable=uname).grid(row=2, column=1, padx=(0, 50))
+etrypsword = Entry(root, textvariable=psword, show="*").grid(
+    row=3, column=1, padx=(0, 50)
+)
 
-btnlogin = Button(root, text="Login", command=funclogin).grid(row=3, column=1)
+btnlogin = Button(root, text="Login", command=funclogin).grid(
+    row=4, column=0, columnspan=2, pady=(20, 0)
+)
 btncreateacc = Button(root, text="Create Account", command=funccreateacc).grid(
-    row=4, column=1
+    row=5, column=0, columnspan=2, pady=(10, 200)
 )
 
 
@@ -58,8 +74,6 @@ btncreateacc = Button(root, text="Create Account", command=funccreateacc).grid(
 # send UPDATE_MSGS regularly
 def chatscreen():
     chatscr = Toplevel()
-    chatscr.geometry("800x600")
-    chatscr.title("CHATSCREEN")
     btncreategrp = Button(
         chatscr, text="Create New group", command=newchatscreen
     ).pack()
@@ -85,8 +99,6 @@ def funccreatechat():
 
 def newchatscreen():
     newchatscr = Toplevel()
-    newchatscr.title("CREAT NEW CHAT")
-    newchatscr.geometry("800x600")
     global grpname
     global participants
     grpname = StringVar()
