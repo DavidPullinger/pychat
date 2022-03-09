@@ -25,7 +25,7 @@ root.geometry(DIMS)
 
 # locally stored main info----------
 chats = ["Chat1", "Chat2"]  # list of chats
-chatIDs = ["cID1","cID2"]  # list of chat Ids
+chatIDs = ["cID1", "cID2"]  # list of chat Ids
 global mainusername  # username of current user
 
 # ----------------------------------
@@ -36,7 +36,7 @@ def funclogin():
     mainusername = uname.get()
     client.send(action, body)  # sends message to server
     body = client.receive()
-    
+
     if body == "False":
         messagebox.showerror("showerror", "Incorrect login details")
     else:
@@ -59,7 +59,7 @@ def funccreateacc():
     action, body = client.reqCREATE_ACC(uname.get(), psword.get())
     mainusername = uname.get()
     client.send(action, body)  # send message to server
-    
+
     if client.receive():
         # messagebox.showinfo("showinfo", "Account created!")
         root.withdraw()
@@ -113,8 +113,7 @@ def chatscreen():
     global chatscr
     global currentChatName
     global drpchats
-    
-    
+
     chatscr = Toplevel()
     chatscr.geometry(DIMS)
     chatscr.resizable(width=False, height=False)
@@ -140,12 +139,12 @@ def chatscreen():
 
 # NEW CHAT SCREEN##################################################
 def funccreatechat():
-    
+
     stripped = [s.strip() for s in participants.get().split(",")]
     action, body = client.reqCREATE_GROUP(grpname.get(), stripped)
     client.send(action, body)  # send message to server
     bod = client.receive()
-    
+
     if bod == "False":
         messagebox.showerror("showerror", "PARTICIPANTS NOT VALID")
     else:
@@ -159,9 +158,10 @@ def newchatscreen():
     global newchatscr
     newchatscr = Toplevel()
     newchatscr.geometry(DIMS)
+    newchatscr.resizable(False, False)
     global grpname
     global participants
-    
+
     grpname = StringVar()
     participants = StringVar()
 
@@ -195,33 +195,32 @@ def sendmsg(msg):
 
 
 def openchat(chatname):
-    
+
     global currentChatId
     global mainusername
-    
-    #loop to find current chat ID from chatID list
+
+    # loop to find current chat ID from chatID list
     for i in range(len(chats)):
-        if(chatname == chats[i]):
+        if chatname == chats[i]:
             currentChatId = chatIDs[i]
-            
-    #initialize chat screen----------
+
+    # initialize chat screen----------
     openchatscr = Toplevel()
+    openchatscr.resizable(False, False)
     openchatscr.geometry(DIMS)
-    openchatscr.title("opened chat")
-    #--------------------------------
-    
-    #send request for update of all messages
-    #send current date and time
+    # --------------------------------
+
+    # send request for update of all messages
+    # send current date and time
     action, body = client.reqUPDATE_MSGS(mainusername, str(datetime.datetime.now()))
-    client.send(action,body)    #sending message to server
-    #---------------------------------------
-    
-    
-    #receive response
+    client.send(action, body)  # sending message to server
+    # ---------------------------------------
+
+    # receive response
     recievedmessage = client.receive()
-    while(recievedmessage == ""):
+    while recievedmessage == "":
         start_time = time.time()
-        client.send(action,body)
+        client.send(action, body)
         while True:
             current_time = time.time()
             elapsed_time = current_time - start_time
@@ -229,54 +228,41 @@ def openchat(chatname):
             if elapsed_time > 10:
                 break
         recievedmessage = client.receive()
-        
-    #------------------
-    
-    msglist =  [
-                {
-                    "groupId":"grup1",
-                    "groupName":"coolgroup",
-                    "content":"you guys are cool",
-                    "sender": "niv",
-                    "sentTime": "09.23.543",
-                    
-                },
-                {
-                    "groupId":"grup1",
-                    "groupName":"coolgroup",
-                    "content":"you guys are not cool",
-                    "sender": "niv",
-                    "sentTime": "09.23.543",
-                    
-                    
-                }
-        
-        ]         #json.loads(recievedmessage)
-    
-    
-    
+
+    # ------------------
+
+    msglist = [
+        {
+            "groupId": "grup1",
+            "groupName": "coolgroup",
+            "content": "you guys are cool",
+            "sender": "niv",
+            "sentTime": "09.23.543",
+        },
+        {
+            "groupId": "grup1",
+            "groupName": "coolgroup",
+            "content": "you guys are not cool",
+            "sender": "niv",
+            "sentTime": "09.23.543",
+        },
+    ]  # json.loads(recievedmessage)
+
     mainframe = LabelFrame(openchatscr)
-    mainframe.grid(row=0, column=0, columnspan=3)
-    chatbox = Text(mainframe, width=45, height=30, wrap = "word")
-    
-    #adds all messages to chatbox----------------------
+    mainframe.grid(row=0, column=0, columnspan=2)
+    chatbox = Text(mainframe, width=51, height=40, wrap="word")
+
+    # adds all messages to chatbox----------------------
     for i in msglist:
-        chatbox.insert("end",i["sender"]+" : "+ i["content"]+"\n")
+        chatbox.insert("end", i["sender"] + " : " + i["content"] + "\n")
         chatbox.pack(expand=1, fill=BOTH)
-        
-    #--------------------------------------------------
-    
-    
-    etrymsg = Entry(openchatscr).grid(row=1, column=0, columnspan=2)
+
+    # --------------------------------------------------
+
+    etrymsg = Entry(openchatscr, width=30).grid(row=1, column=0, pady=(10, 0))
     btnsend = Button(openchatscr, text="SEND", command=lambda msg: sendmsg(msg)).grid(
-        row=1, column=1, columnspan=2
+        row=1, column=1, pady=(10, 0)
     )
-
-
-########################################
-# while True:
-#    root.update()
-#    loop()
 
 
 root.mainloop()
