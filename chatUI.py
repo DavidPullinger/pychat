@@ -191,6 +191,7 @@ def newchatscreen():
 
 # CHAT SCREEN#############################################
 def sendmsg(msg):
+    
     print(msg)
 
 
@@ -198,6 +199,8 @@ def openchat(chatname):
     
     global currentChatId
     global mainusername
+    global msg
+    msg = StringVar()
     
     #loop to find current chat ID from chatID list
     for i in range(len(chats)):
@@ -267,8 +270,8 @@ def openchat(chatname):
     #--------------------------------------------------
     
     
-    etrymsg = Entry(openchatscr).grid(row=1, column=0, columnspan=2)
-    btnsend = Button(openchatscr, text="SEND", command=lambda msg: sendmsg(msg)).grid(
+    etrymsg = Entry(openchatscr, textvariable = msg).grid(row=1, column=0, columnspan=2)
+    btnsend = Button(openchatscr, text="SEND", command=lambda value =msg :sendmsg(value)).grid(
         row=1, column=1, columnspan=2
     )
 
