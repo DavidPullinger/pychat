@@ -16,10 +16,16 @@ def funclogin():
     if(body == "False"):
         messagebox.showerror("showerror", "Incorrect login details") 
     else:
+        flag = True
         body = json.loads(body)
         for i in body:
             #add chats to global chats list
-            chats.append()
+            for j in chats:
+                if(i.groupName == j):
+                    flag = False
+            if(flag):
+                chats.append(i.groupName)
+            
         chatscreen()
         
 
@@ -53,7 +59,6 @@ def chatscreen():
     chatscr.title("CHATSCREEN")
     btncreategrp = Button(chatscr,text = "Create New group" , command = newchatscreen).pack()
     chat = StringVar()
-    chats = ["chat1", "chat2", "chat3"]
     drpchats = OptionMenu(chatscr,chat, *chats, command =lambda chat: openchat(chat)).pack()
     
     
