@@ -4,6 +4,8 @@ from tkinter import messagebox
 from tkinter import _setit
 import json
 import client
+import datetime
+import time
 
 WIDTH = 375
 HEIGHT = 625
@@ -23,13 +25,13 @@ root.geometry(DIMS)
 
 # locally stored main info----------
 chats = ["Chat1", "Chat2"]  # list of chats
-chatIDs = []  # list of chat Ids
+chatIDs = ["cID1","cID2"]  # list of chat Ids
 global mainusername  # username of current user
 
 # ----------------------------------
 # MAIN SCREEN######################################
 def funclogin():
-    
+    global mainusername
     action, body = client.reqLOGIN(uname.get(), psword.get())
     mainusername = uname.get()
     client.send(action, body)  # sends message to server
@@ -53,7 +55,7 @@ def funclogin():
 
 
 def funccreateacc():
-    
+    global mainusername
     action, body = client.reqCREATE_ACC(uname.get(), psword.get())
     mainusername = uname.get()
     client.send(action, body)  # send message to server
@@ -195,6 +197,7 @@ def sendmsg(msg):
 def openchat(chatname):
     
     global currentChatId
+    global mainusername
     
     #loop to find current chat ID from chatID list
     for i in range(len(chats)):
@@ -209,18 +212,61 @@ def openchat(chatname):
     
     #send request for update of all messages
     #send current date and time
-    action, body = client.reqUPDATE_MSGS(currentChatId, )
+    action, body = client.reqUPDATE_MSGS(mainusername, str(datetime.datetime.now()))
     client.send(action,body)    #sending message to server
     #---------------------------------------
     
     
+    #receive response
+    recievedmessage = client.receive()
+    while(recievedmessage == ""):
+        start_time = time.time()
+        client.send(action,body)
+        while True:
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+
+            if elapsed_time > 10:
+                break
+        recievedmessage = client.receive()
         
+    #------------------
+    
+    msglist =  [
+                {
+                    "groupId":"grup1",
+                    "groupName":"coolgroup",
+                    "content":"you guys are cool",
+                    "sender": "niv",
+                    "sentTime": "09.23.543",
+                    
+                },
+                {
+                    "groupId":"grup1",
+                    "groupName":"coolgroup",
+                    "content":"you guys are not cool",
+                    "sender": "niv",
+                    "sentTime": "09.23.543",
+                    
+                    
+                }
+        
+        ]         #json.loads(recievedmessage)
+    
+    
+    
     mainframe = LabelFrame(openchatscr)
     mainframe.grid(row=0, column=0, columnspan=3)
-    chatbox = Text(mainframe, width=50, height=30)
-    chatbox.insert("1.0", "First message in chat")
-    # chatbox.grid(row = 0, colum = 0, columnspan=3)
-    chatbox.pack(expand=1, fill=BOTH)
+    chatbox = Text(mainframe, width=45, height=30, wrap = "word")
+    
+    #adds all messages to chatbox----------------------
+    for i in msglist:
+        chatbox.insert("end",i["sender"]+" : "+ i["content"]+"\n")
+        chatbox.pack(expand=1, fill=BOTH)
+        
+    #--------------------------------------------------
+    
+    
     etrymsg = Entry(openchatscr).grid(row=1, column=0, columnspan=2)
     btnsend = Button(openchatscr, text="SEND", command=lambda msg: sendmsg(msg)).grid(
         row=1, column=1, columnspan=2
