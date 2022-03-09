@@ -25,8 +25,8 @@ DIMS = "{}x{}+{}+{}".format(WIDTH, HEIGHT, x_cordinate, y_cordinate)
 root.geometry(DIMS)
 
 # locally stored main info----------
-chats = ["Chat1", "Chat2"]  # list of chats
-chatIDs = ["cID1", "cID2"]  # list of chat Ids
+chats = []  # list of chats
+chatIDs = []  # list of chat Ids
 global mainusername  # username of current user
 
 # ----------------------------------
@@ -36,22 +36,17 @@ def funclogin():
     action, body = client.reqLOGIN(uname.get(), psword.get())
     mainusername = uname.get()
     client.send(action, body)  # sends message to server
-    body = client.receive()
+    body = client.receive("LOGIN")
 
     if body == "False":
-        messagebox.showerror("showerror", "Incorrect login details")
+        messagebox.showerror("showerror", "INVALID PASSWORD OR USERNAME")
     else:
         flag = True
-        body = json.loads(body)
         for i in body:
             # add chats to global chats list
-            for j in chatIDs:
-                if i.groupId == j:
-                    flag = False
-            if flag:
-                chatIDs.append(i.groupId)
-                chats.append(i.groupName)
-
+            if i["groupId"] not in chatIDs:
+                chatIDs.append(i["groupId"])
+                chats.append(i["groupName"])
         chatscreen()
 
 
