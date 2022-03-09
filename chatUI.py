@@ -4,24 +4,26 @@ from tkinter import messagebox
 import json
 import client
 
-WIDTH = "375"
-HEIGHT = "625"
-DIMS = WIDTH + "x" + HEIGHT
+WIDTH = 375
+HEIGHT = 625
+
 
 root = Tk()
-root.geometry(DIMS)
 root.title("pyChat")
 root.resizable(width=False, height=False)
+# center screen
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+x_cordinate = int((screen_width / 2) - (WIDTH / 2))
+y_cordinate = int((screen_height / 2) - (HEIGHT / 2))
+DIMS = "{}x{}+{}+{}".format(WIDTH, HEIGHT, x_cordinate, y_cordinate)
+root.geometry(DIMS)
+
 # locally stored main info----------
 chats = ["Chat1", "Chat2"]  # list of chats
 chatIDs = []  # list of chat Ids
 global mainusername  # username of current user
-
-
-def refresh(self):
-    self.destroy()
-    self.__init__()
-
 
 # ----------------------------------
 # MAIN SCREEN######################################
@@ -53,7 +55,7 @@ def funccreateacc():
     client.send(action, body)  # send message to server
     if client.receive():
         # messagebox.showinfo("showinfo", "Account created!")
-        # root.withdraw()
+        root.withdraw()
         chatscreen()
     else:
         messagebox.showerror("showerror", "USERNAME ALREADY EXISTS")
@@ -86,13 +88,18 @@ btncreateacc = Button(root, text="Create Account", command=funccreateacc).grid(
 )
 
 
-# CHAT choose SCREEN######################################
-def updatechatoptions():
-    drpchats["menu"].delete(0, "end")
-    for i in chats:
-        drpchats["menu"].add_command(
-            chatscr, chat, *chats, command=lambda chat: openchat(chat)
+def populateChatLabels():
+    for i in range(0, len(chats)):
+        l = Label(
+            chatLabels,
+            text=chats[i],
+            font=("Calibri", 18),
+            width=10,
+            borderwidth=2,
+            relief="solid",
         )
+        l.grid(row=i, column=0, ipadx=50, ipady=10, pady=(0, 10))
+        l.bind("<Button-1>", lambda ev: openchat(chats[i]))
 
 
 def chatscreen():
@@ -107,19 +114,10 @@ def chatscreen():
     ).grid(row=0, column=0, padx=(140, 140), pady=(10, 20))
     global chat
     chat = StringVar()
-    labels = Frame(chatscr)
-    labels.grid(row=1, column=0)
-    for i in range(0, len(chats)):
-        l = Label(
-            labels,
-            text=chats[i],
-            font=("Calibri", 18),
-            width=10,
-            borderwidth=2,
-            relief="solid",
-        )
-        l.grid(row=i, column=0, ipadx=50, ipady=10, pady=(0, 10))
-        l.bind("<Button-1>", lambda chat: openchat(chat))
+    global chatLabels
+    chatLabels = Frame(chatscr)
+    chatLabels.grid(row=1, column=0)
+    populateChatLabels()
 
     chatscr.grid_rowconfigure(len(chats), weight=1)
     btncreategrp = Button(
@@ -140,26 +138,40 @@ def funccreatechat():
     else:
         # add group to list bod containts group ID
         chats.append(grpname.get())
-        messagebox.showinfo("showinfo", "Chat Created!")
-        refresh(chatscr)
+        populateChatLabels()
+        newchatscr.destroy()
 
 
 def newchatscreen():
+    global newchatscr
     newchatscr = Toplevel()
+    newchatscr.geometry(DIMS)
     global grpname
     global participants
     grpname = StringVar()
     participants = StringVar()
-    lblname = Label(newchatscr, text="Enter name of group").grid(row=0, column=0)
-    etryname = Entry(newchatscr, textvariable=grpname).grid(row=0, column=1)
+
+    title = Label(
+        newchatscr,
+        text="Start new chat",
+        font=("Calibri", 30),
+    ).grid(row=0, column=0, pady=(10, 20), padx=(95, 95))
+
+    lblname = Label(newchatscr, text="Enter name of group:").grid(
+        row=1, column=0, pady=(180, 0)
+    )
+    etryname = Entry(newchatscr, textvariable=grpname).grid(
+        row=2,
+        column=0,
+    )
     lblparticipants = Label(
-        newchatscr, text="Enter a list of usernames\nSeparated by a ,"
-    ).grid(row=1, column=0)
+        newchatscr, text="Enter a list of usernames\nseparated by a comma:"
+    ).grid(row=3, column=0, pady=(20, 0))
     etryparticipants = Entry(newchatscr, textvariable=participants).grid(
-        row=1, column=1
+        row=4, column=0
     )
     btncreatechat = Button(newchatscr, text="Create Chat", command=funccreatechat).grid(
-        row=2, column=0
+        row=5, column=0, pady=(10, 0)
     )
 
 
@@ -170,7 +182,7 @@ def sendmsg(msg):
 
 def openchat(chatname):
     openchatscr = Toplevel()
-    openchatscr.geometry("800x600")
+    openchatscr.geometry(DIMS)
     openchatscr.title("opened chat")
     print(chatname)
     mainframe = LabelFrame(openchatscr)
