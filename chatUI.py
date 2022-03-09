@@ -1,4 +1,5 @@
 from cProfile import label
+from cgitb import text
 from tkinter import *
 from tkinter import messagebox
 from tkinter import _setit
@@ -111,9 +112,6 @@ def populateChatLabels():
 
 def chatscreen():
     global chatscr
-    global currentChatName
-    global drpchats
-
     chatscr = Toplevel()
     chatscr.geometry(DIMS)
     chatscr.resizable(width=False, height=False)
@@ -196,14 +194,22 @@ def sendmsg():
     global chatbox
     global etrymsg
     global msg
-    
-    action, body = client.reqSEND_MSG(currentChatId,mainusername,msg.get())
-    client.send(action,body)
-    
-    #still need to clear entry box
-    chatbox.insert("end", mainusername + " at " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" : " + msg.get() + "\n")
+
+    action, body = client.reqSEND_MSG(currentChatId, mainusername, msg.get())
+    client.send(action, body)
+
+    # still need to clear entry box
+    chatbox.insert(
+        "end",
+        mainusername
+        + " at "
+        + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        + " : "
+        + msg.get()
+        + "\n",
+    )
     chatbox.pack(expand=1, fill=BOTH)
-    etrymsg.delete(0,END)
+    etrymsg.delete(0, END)
 
 
 def openchat(chatname):
@@ -214,8 +220,8 @@ def openchat(chatname):
     global etrymsg
     global msg
     msg = StringVar()
-    
-    #loop to find current chat ID from chatID list
+
+    # loop to find current chat ID from chatID list
     for i in range(len(chats)):
         if chatname == chats[i]:
             currentChatId = chatIDs[i]
@@ -228,7 +234,9 @@ def openchat(chatname):
 
     # send request for update of all messages
     # send current date and time
-    action, body = client.reqUPDATE_MSGS(mainusername, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    action, body = client.reqUPDATE_MSGS(
+        mainusername, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
     client.send(action, body)  # sending message to server
     # ---------------------------------------
 
@@ -253,33 +261,46 @@ def openchat(chatname):
             "groupName": "coolgroup",
             "content": "you guys are cool",
             "sender": "niv",
-            "sentTime": "09.23.543",
+            "sentTime": "2022-03-09 20:03:00",
         },
         {
             "groupId": "grup1",
             "groupName": "coolgroup",
-            "content": "you guys are not cool",
+            "content": "you guys are not cool at all lorem ipsum dolar sit amet",
             "sender": "niv",
-            "sentTime": "09.23.543",
+            "sentTime": "2022-03-09 20:03:00",
+        },
+        {
+            "groupId": "grup1",
+            "groupName": "coolgroup",
+            "content": "inshallah... hehehe siuuuu",
+            "sender": "david00",
+            "sentTime": "2022-03-09 20:03:00",
         },
     ]  # json.loads(recievedmessage)
 
     mainframe = LabelFrame(openchatscr)
     mainframe.grid(row=0, column=0, columnspan=2)
     chatbox = Text(mainframe, width=51, height=40, wrap="word")
-
+    chatbox.tag_config("time", foreground="yellow")
+    chatbox.config(spacing2=5)
     # adds all messages to chatbox----------------------
     for i in msglist:
-        chatbox.insert("end", i["sender"] +" at " + i["sentTime"]+ " : " + i["content"] + "\n")
+        index = chatbox.index("end")
+        chatbox.insert(
+            index,
+            i["sender"] + " at " + i["sentTime"] + ":\t" + i["content"] + "\n\n",
+        )
+        index = str((int)(index[: index.index(".")]) - 1) + "."
+        lengthOfInfo = len(i["sender"] + " at " + i["sentTime"] + " :")
+        chatbox.tag_add("time", index + "0", index + str(lengthOfInfo))
         chatbox.pack(expand=1, fill=BOTH)
-        
-    #--------------------------------------------------
-    
-    etrymsg = Entry(openchatscr, width=30, textvariable = msg)
-    etrymsg.grid(row=1, column=0, pady=(10, 0))
 
-    btnsend = Button(openchatscr, text="SEND", command=sendmsg)
-    btnsend.grid(
+    # --------------------------------------------------
+    global etrymsg
+    etrymsg = Entry(openchatscr, width=30, textvariable=msg)
+    etrymsg.grid(row=1, column=0, pady=(10, 0))
+    btnsend = Button(openchatscr, text="SEND", command=lambda: sendmsg()).grid(
         row=1, column=1, pady=(10, 0)
     )
 
