@@ -1,17 +1,28 @@
+from cProfile import label
 from tkinter import *
 from tkinter import messagebox
 import json
-import tkinter
 import client
 
+WIDTH = "375"
+HEIGHT = "625"
+DIMS = WIDTH + "x" + HEIGHT
 
 root = Tk()
+root.geometry(DIMS)
 root.title("pyChat")
 root.resizable(width=False, height=False)
 # locally stored main info----------
-chats = []  # list of chats
+chats = ["Chat1", "Chat2"]  # list of chats
 chatIDs = []  # list of chat Ids
 global mainusername  # username of current user
+
+
+def refresh(self):
+    self.destroy()
+    self.__init__()
+
+
 # ----------------------------------
 # MAIN SCREEN######################################
 def funclogin():
@@ -34,7 +45,6 @@ def funclogin():
                 chats.append(i.groupName)
 
         chatscreen()
-        root.destroy()
 
 
 def funccreateacc():
@@ -42,8 +52,9 @@ def funccreateacc():
     mainusername = uname.get()
     client.send(action, body)  # send message to server
     if client.receive():
+        # messagebox.showinfo("showinfo", "Account created!")
+        # root.withdraw()
         chatscreen()
-        messagebox.showinfo("showinfo", "Account created!")
     else:
         messagebox.showerror("showerror", "USERNAME ALREADY EXISTS")
     return 0
@@ -76,7 +87,6 @@ btncreateacc = Button(root, text="Create Account", command=funccreateacc).grid(
 
 
 # CHAT choose SCREEN######################################
-# send UPDATE_MSGS regularly
 def updatechatoptions():
     drpchats["menu"].delete(0, "end")
     for i in chats:
@@ -88,15 +98,35 @@ def updatechatoptions():
 def chatscreen():
     global chatscr
     chatscr = Toplevel()
-    btncreategrp = Button(
-        chatscr, text="Create New group", command=newchatscreen
-    ).pack()
+    chatscr.geometry(DIMS)
+    chatscr.resizable(width=False, height=False)
+    title = Label(
+        chatscr,
+        text="Chats",
+        font=("Calibri", 30),
+    ).grid(row=0, column=0, padx=(140, 140), pady=(10, 20))
     global chat
     chat = StringVar()
-    global drpchats
-    drpchats = OptionMenu(
-        chatscr, chat, *chats, command=lambda chat: openchat(chat)
-    ).pack()
+    labels = Frame(chatscr)
+    labels.grid(row=1, column=0)
+    for i in range(0, len(chats)):
+        l = Label(
+            labels,
+            text=chats[i],
+            font=("Calibri", 18),
+            width=10,
+            borderwidth=2,
+            relief="solid",
+        )
+        l.grid(row=i, column=0, ipadx=50, ipady=10, pady=(0, 10))
+        l.bind("<Button-1>", lambda chat: openchat(chat))
+
+    chatscr.grid_rowconfigure(len(chats), weight=1)
+    btncreategrp = Button(
+        chatscr,
+        text="Start new chat",
+        command=newchatscreen,
+    ).grid(row=len(chats) + 1, column=0, pady=(10, 20))
 
 
 # NEW CHAT SCREEN##################################################
@@ -110,8 +140,8 @@ def funccreatechat():
     else:
         # add group to list bod containts group ID
         chats.append(grpname.get())
-
         messagebox.showinfo("showinfo", "Chat Created!")
+        refresh(chatscr)
 
 
 def newchatscreen():
