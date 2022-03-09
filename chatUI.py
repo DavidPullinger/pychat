@@ -7,10 +7,15 @@ import client
 root = Tk()
 root.title("ChatApp")
 root.geometry("800x600")
+#locally stored main info----------
 chats = []    #list of chats
+chatIDs = []    #list of chat Ids
+global mainusername #username of current user
+#----------------------------------
 #MAIN SCREEN######################################
 def funclogin():
     action, body = client.reqLOGIN(uname.get(), psword.get())
+    mainusername = uname.get()
     client.send(action, body)  # sends message to server
     body = client.receive()
     if body == "False":
@@ -20,10 +25,11 @@ def funclogin():
         body = json.loads(body)
         for i in body:
             # add chats to global chats list
-            for j in chats:
-                if i.groupName == j:
+            for j in chatIDs:
+                if i.groupId == j:
                     flag = False
             if flag:
+                chatIDs.append(i.groupId)
                 chats.append(i.groupName)
 
         chatscreen()
@@ -31,6 +37,7 @@ def funclogin():
 
 def funccreateacc():
     action, body = client.reqCREATE_ACC(uname.get(), psword.get())
+    mainusername = uname.get()
     client.send(action, body)  # send message to server
     if client.receive():
         chatscreen()
@@ -60,7 +67,7 @@ def updatechatoptions():
     drpchats['menu'].delete(0,'end')
     for i in chats:
         drpchats['menu'].add_command(chatscr,chat, *chats,command=lambda chat: openchat(chat))
-    pass
+    
 
 def chatscreen():
     global chatscr
