@@ -1,12 +1,7 @@
-from cProfile import label
-from cgitb import text
 from tkinter import *
 from tkinter import messagebox
-from tkinter import _setit
-import json
 import client
 import datetime
-import time
 
 WIDTH = 375
 HEIGHT = 625
@@ -29,26 +24,47 @@ root.geometry(DIMS)
 chats = []  # list of chats
 chatIDs = []  # list of chat Ids
 messages = []  # list of user messages
-global mainusername  # username of current user
+mainusername = ""  # username of current user
+currentChatId = ""
+
+
+def update_messageList():
+    global messages
+    action, body = client.reqUPDATE_MSGS(mainusername, "0")
+    client.send(action, body)
+    body = client.receive(action)
+    if body != "False":
+        messages = body
+        for i in body:
+            # add chats to global chats list
+            if i["groupId"] not in chatIDs:
+                chatIDs.append(i["groupId"])
+                chats.append(i["groupName"])
+        populateChatLabels()
+    root.after(500, update_messageList)
+
 
 # ----------------------------------
 # MAIN SCREEN######################################
 def funclogin():
     global mainusername
     action, body = client.reqLOGIN(uname.get(), psword.get())
-    mainusername = uname.get()
     client.send(action, body)  # sends message to server
-    body = client.receive("LOGIN")
+    body = client.receive(action)
 
     if body == "False":
         messagebox.showerror("showerror", "INVALID PASSWORD OR USERNAME")
     else:
+        mainusername = uname.get()
+        global messages
+        messages = body
         for i in body:
             # add chats to global chats list
             if i["groupId"] not in chatIDs:
                 chatIDs.append(i["groupId"])
                 chats.append(i["groupName"])
         root.withdraw()
+        root.after(500, update_messageList)
         chatscreen()
 
 
@@ -57,9 +73,10 @@ def funccreateacc():
     action, body = client.reqCREATE_ACC(uname.get(), psword.get())
     client.send(action, body)  # send message to server
 
-    if client.receive("CREATE_ACC"):
+    if client.receive(action):
         mainusername = uname.get()
         root.withdraw()
+        root.after(500, update_messageList)
         chatscreen()
     else:
         messagebox.showerror("showerror", "USERNAME ALREADY EXISTS")
@@ -102,14 +119,23 @@ def populateChatLabels():
             relief="solid",
         )
         l.grid(row=i, column=0, ipadx=50, ipady=10, pady=(0, 10))
-        l.bind("<Button-1>", lambda ev: openchat(chats[i]))
+        l.bind("<Button-1>", lambda ev, i=i: openchat(chats[i]))
+
+
+def on_closing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        root.destroy()
 
 
 def chatscreen():
+    root.title("pyChat - " + mainusername)
     global chatscr
     chatscr = Toplevel()
     chatscr.geometry(DIMS)
     chatscr.resizable(width=False, height=False)
+    # since we hide root, we must destroy it
+    # whenever chatscr is destroyed
+    chatscr.protocol("WM_DELETE_WINDOW", on_closing)
     title = Label(
         chatscr,
         text="Chats",
@@ -121,13 +147,12 @@ def chatscreen():
     chatLabels = Frame(chatscr)
     chatLabels.grid(row=1, column=0)
     populateChatLabels()
-
-    chatscr.grid_rowconfigure(len(chats), weight=1)
+    chatscr.grid_rowconfigure(1, weight=1)
     btncreategrp = Button(
         chatscr,
         text="Start new chat",
         command=newchatscreen,
-    ).grid(row=len(chats) + 1, column=0, pady=(10, 20))
+    ).grid(row=len(chats) + 2, column=0, pady=(10, 20))
 
 
 # NEW CHAT SCREEN##################################################
@@ -135,15 +160,11 @@ def funccreatechat():
     stripped = [s.strip() for s in participants.get().split(",")]
     action, body = client.reqCREATE_GROUP(grpname.get(), stripped)
     client.send(action, body)  # send message to server
-    bod = client.receive("CREATE_GROUP")
+    bod = client.receive(action)
 
     if bod == "False":
         messagebox.showerror("showerror", "PARTICIPANTS NOT VALID")
     else:
-        # add group to list bod containts group ID
-        chats.append(grpname.get())
-        chatIDs.append(body)
-        populateChatLabels()
         newchatscr.destroy()
 
 
@@ -182,33 +203,38 @@ def newchatscreen():
     )
 
 
+def populateChatMessages():
+    if currentChatId == "":
+        return
+    chatbox.delete("0.0", END)
+    # adds all messages to chatbox----------------------
+    for i in filter(lambda msg: msg["groupId"] == currentChatId, messages):
+        if i["sender"] == None:
+            continue
+        index = chatbox.index("end")
+        chatbox.insert(
+            index,
+            i["sender"] + " at " + i["sentTime"] + ":\t" + i["content"] + "\n\n",
+        )
+        index = str((int)(index[: index.index(".")]) - 1) + "."
+        lengthOfInfo = len(i["sender"] + " at " + i["sentTime"] + " :")
+        chatbox.tag_add("time", index + "0", index + str(lengthOfInfo))
+        chatbox.pack(expand=1, fill=BOTH)
+    chatbox.after(500, populateChatMessages)
+    chatbox.see(END)
+
+
 # CHAT SCREEN#############################################
 def sendmsg():
-    global currentChatId
-    global mainusername
-    global chatbox
-    global etrymsg
-    global msg
-
     action, body = client.reqSEND_MSG(currentChatId, mainusername, msg.get())
     client.send(action, body)
-
-    # still need to clear entry box
-    chatbox.insert(
-        "end",
-        mainusername
-        + " at "
-        + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        + " : "
-        + msg.get()
-        + "\n",
-    )
-    chatbox.pack(expand=1, fill=BOTH)
-    etrymsg.delete(0, END)
+    if client.receive(action) == "True":
+        etrymsg.delete(0, END)
+    else:
+        messagebox.showerror("showerror", "MESSAGE NOT SENT")
 
 
 def openchat(chatname):
-
     global currentChatId
     global mainusername
     global chatbox
@@ -220,77 +246,17 @@ def openchat(chatname):
     for i in range(len(chats)):
         if chatname == chats[i]:
             currentChatId = chatIDs[i]
-
     # initialize chat screen----------
     openchatscr = Toplevel()
     openchatscr.resizable(False, False)
     openchatscr.geometry(DIMS)
-    # --------------------------------
-
-    # send request for update of all messages
-    # send current date and time
-    action, body = client.reqUPDATE_MSGS(
-        mainusername, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    )
-    client.send(action, body)  # sending message to server
-    # ---------------------------------------
-
-    # receive response
-    recievedmessage = client.receive()
-    while recievedmessage == "":
-        start_time = time.time()
-        client.send(action, body)
-        while True:
-            current_time = time.time()
-            elapsed_time = current_time - start_time
-
-            if elapsed_time > 10:
-                break
-        recievedmessage = client.receive()
-
-    # ------------------
-
-    msglist = [
-        {
-            "groupId": "grup1",
-            "groupName": "coolgroup",
-            "content": "you guys are cool",
-            "sender": "niv",
-            "sentTime": "2022-03-09 20:03:00",
-        },
-        {
-            "groupId": "grup1",
-            "groupName": "coolgroup",
-            "content": "you guys are not cool at all lorem ipsum dolar sit amet",
-            "sender": "niv",
-            "sentTime": "2022-03-09 20:03:00",
-        },
-        {
-            "groupId": "grup1",
-            "groupName": "coolgroup",
-            "content": "inshallah... hehehe siuuuu",
-            "sender": "david00",
-            "sentTime": "2022-03-09 20:03:00",
-        },
-    ]  # json.loads(recievedmessage)
 
     mainframe = LabelFrame(openchatscr)
     mainframe.grid(row=0, column=0, columnspan=2)
     chatbox = Text(mainframe, width=51, height=40, wrap="word")
     chatbox.tag_config("time", foreground="yellow")
     chatbox.config(spacing2=5)
-    # adds all messages to chatbox----------------------
-    for i in msglist:
-        index = chatbox.index("end")
-        chatbox.insert(
-            index,
-            i["sender"] + " at " + i["sentTime"] + ":\t" + i["content"] + "\n\n",
-        )
-        index = str((int)(index[: index.index(".")]) - 1) + "."
-        lengthOfInfo = len(i["sender"] + " at " + i["sentTime"] + " :")
-        chatbox.tag_add("time", index + "0", index + str(lengthOfInfo))
-        chatbox.pack(expand=1, fill=BOTH)
-
+    populateChatMessages()
     # --------------------------------------------------
     global etrymsg
     etrymsg = Entry(openchatscr, width=30, textvariable=msg)

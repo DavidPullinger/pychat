@@ -71,7 +71,10 @@ def reqSEND_MSG(groupID, sender, content):
 
 
 def resSEND_MSG(body):
-    return 0
+    if body == "MESSAGE SENT":
+        return "True"
+    else:
+        return "False"
 
 
 # ---------------------------------------
@@ -104,5 +107,5 @@ def send(action, body):
 
 
 def receive(command):
-    modifiedMessage, serverAddress = clientSocket.recvfrom(2048)  # receive message
+    modifiedMessage, serverAddress = clientSocket.recvfrom(10 * 1024)  # receive message
     return DECODE_RESPONSE(command, modifiedMessage)
