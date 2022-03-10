@@ -24,9 +24,11 @@ y_cordinate = int((screen_height / 2) - (HEIGHT / 2))
 DIMS = "{}x{}+{}+{}".format(WIDTH, HEIGHT, x_cordinate, y_cordinate)
 root.geometry(DIMS)
 
+
 # locally stored main info----------
 chats = []  # list of chats
 chatIDs = []  # list of chat Ids
+messages = []  # list of user messages
 global mainusername  # username of current user
 
 # ----------------------------------
@@ -41,28 +43,26 @@ def funclogin():
     if body == "False":
         messagebox.showerror("showerror", "INVALID PASSWORD OR USERNAME")
     else:
-        flag = True
         for i in body:
             # add chats to global chats list
             if i["groupId"] not in chatIDs:
                 chatIDs.append(i["groupId"])
                 chats.append(i["groupName"])
+        root.withdraw()
         chatscreen()
 
 
 def funccreateacc():
     global mainusername
     action, body = client.reqCREATE_ACC(uname.get(), psword.get())
-    mainusername = uname.get()
     client.send(action, body)  # send message to server
 
-    if client.receive():
-        # messagebox.showinfo("showinfo", "Account created!")
+    if client.receive("CREATE_ACC"):
+        mainusername = uname.get()
         root.withdraw()
         chatscreen()
     else:
         messagebox.showerror("showerror", "USERNAME ALREADY EXISTS")
-    return 0
 
 
 title2 = Label(root, text="Chat", font=("Calibri", 30), fg="#306998").grid(
@@ -132,17 +132,17 @@ def chatscreen():
 
 # NEW CHAT SCREEN##################################################
 def funccreatechat():
-
     stripped = [s.strip() for s in participants.get().split(",")]
     action, body = client.reqCREATE_GROUP(grpname.get(), stripped)
     client.send(action, body)  # send message to server
-    bod = client.receive()
+    bod = client.receive("CREATE_GROUP")
 
     if bod == "False":
         messagebox.showerror("showerror", "PARTICIPANTS NOT VALID")
     else:
         # add group to list bod containts group ID
         chats.append(grpname.get())
+        chatIDs.append(body)
         populateChatLabels()
         newchatscr.destroy()
 
